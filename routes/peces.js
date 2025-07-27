@@ -4,7 +4,7 @@ const db = require('../db');
 
 router.get('/:usuario_id', (req, res) => {
   const { usuario_id } = req.params;
-  console.log('Solicitud para usuario_id:', usuario_id);
+  console.log('Solicitud a /peces para usuario:', usuario_id);
 
   db.query(`
     SELECT p.*, pu.cantidad
@@ -20,5 +20,6 @@ router.get('/:usuario_id', (req, res) => {
     res.json(result);
   });
 });
+
 
 module.exports = router;
