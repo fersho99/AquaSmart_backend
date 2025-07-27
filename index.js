@@ -1,7 +1,10 @@
+require('dotenv').config(); // Carga variables de entorno desde .env
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
 
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
@@ -11,6 +14,8 @@ app.use('/peces', require('./routes/peces'));
 app.use('/lecturas', require('./routes/lecturas'));
 app.use('/alimentacion', require('./routes/alimentacion'));
 
-app.listen(3000, () => {
-  console.log('Servidor corriendo en http://localhost:3000');
+// Puerto dinámico para Render o 3000 en local
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
