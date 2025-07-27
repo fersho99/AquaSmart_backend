@@ -2,42 +2,42 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// registro
-router.post('/register', (req, res) => {
+// Registro
+router.post('/register', async (req, res) => {
   const { nombre, email, contrasena } = req.body;
 
-  db.query(
-    'INSERT INTO usuarios (nombre, email, contrasena) VALUES (?, ?, ?)',
-    [nombre, email, contrasena],
-    (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: 'Error al registrar' });
-      }
-      res.json({ usuario_id: result.insertId });
-    }
-  );
+  try {
+    const [result] = await db.query(
+      'INSERT INTO usuarios (nombre, email, contrasena) VALUES (?, ?, ?)',
+      [nombre, email, contrasena]
+    );
+    res.json({ usuario_id: result.insertId });
+  } catch (err) {
+    console.error('Error al registrar:', err);
+    res.status(500).json({ error: 'Error al registrar' });
+  }
 });
 
 // Login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  db.query(
-    'SELECT id_U FROM usuarios WHERE email = ? AND contrasena = ?',
-    [email, password],
-    (err, result) => {
-      if (err) {
-        console.error('Error en login:', err);
-        return res.status(500).json({ error: 'Error en login' });
-      }
-      if (result.length === 0) {
-        console.log('Credenciales incorrectas');
-        return res.status(401).json({ error: 'Credenciales inválidas' });
-      }
-      res.json({ usuario_id: result[0].id_U });
-    }
-  );
-});
+  try {
+    const [result] = await db.query(
+      'SELECT id_U FROM usuarios WHERE email = ? AND contrasena = ?',
+      [email, password]
+    );
 
+    if (result.length === 0) {
+      console.log('Credenciales incorrectas');
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    res.json({ usuario_id: result[0].id_U });
+  } catch (err) {
+    console.error('Error en login:', err);
+    res.status(500).json({ error: 'Error en login' });
+  }
+});
 
 module.exports = router;
