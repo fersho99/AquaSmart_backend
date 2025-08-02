@@ -8,10 +8,10 @@ router.post('/', async (req, res) => {
 
   try {
     // Elimina horarios anteriores (si se desea solo guardar dos por usuario)
-    await db.query('DELETE FROM horarios WHERE usuario_id = ?', [usuario_id]);
+    await db.query('DELETE FROM horario WHERE usuario_id = ?', [usuario_id]);
 
     await db.query(
-      'INSERT INTO horarios (usuario_id, hora) VALUES (?, ?), (?, ?)',
+      'INSERT INTO horario (usuario_id, hora) VALUES (?, ?), (?, ?)',
       [usuario_id, hora1, usuario_id, hora2]
     );
 
@@ -28,7 +28,7 @@ router.get('/:usuario_id', async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT hora FROM horarios WHERE usuario_id = ? ORDER BY hora ASC',
+      'SELECT hora FROM horario WHERE usuario_id = ? ORDER BY hora ASC',
       [usuario_id]
     );
     res.json(rows);
