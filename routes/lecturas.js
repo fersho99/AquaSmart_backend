@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// POST /  ---> https://aquasmart-backend.onrender.com/lecturas
+// POST 
 router.post('/', async (req, res) => {
   const { usuario_id, temperatura, ph, alimento } = req.body;
 
@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// GET /:usuario_id  ---> https://aquasmart-backend.onrender.com/lecturas/23
+// GET 
 router.get('/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
 
