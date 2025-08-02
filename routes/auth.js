@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const [result] = await db.query(
-      'SELECT id_U FROM usuarios WHERE email = ? AND contrasena = ?',
+      'SELECT id_U, nombre, email FROM usuarios WHERE email = ? AND contrasena = ?',
       [email, password]
     );
 
@@ -33,11 +33,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    res.json({ usuario_id: result[0].id_U });
+    const usuario = result[0];
+    res.json({
+      usuario_id: usuario.id_U,
+      nombre: usuario.nombre,
+      email: usuario.email
+    });
   } catch (err) {
     console.error('Error en login:', err);
     res.status(500).json({ error: 'Error en login' });
   }
 });
+
 
 module.exports = router;

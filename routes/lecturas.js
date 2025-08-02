@@ -2,31 +2,38 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// Insertar lectura
-router.post('/', async (req, res) => {
-  const { usuario_id, temperatura, ph } = req.body;
+// POST /lecturas
+router.post('/lecturas', async (req, res) => {
+  const { usuario_id,  temperatura, ph, alimento } = req.body;
+
   try {
     await db.query(
-      'INSERT INTO lecturas (usuario_id, temperatura, ph) VALUES (?, ?, ?)',
-      [usuario_id, temperatura, ph]
+      'INSERT INTO lecturas (usuario_id, temperatura, ph, alimento, fecha_hora) VALUES (?, ?, ?, ?, NOW())',
+      [usuario_id,  temperatura, ph, alimento]
     );
-    res.json({ success: true });
+    res.json({ message: 'Lectura guardada' });
   } catch (err) {
     console.error('Error al guardar lectura:', err);
     res.status(500).json({ error: 'Error al guardar lectura' });
   }
 });
 
-// Consultar lecturas del usuario
-router.get('/:usuario_id', async (req, res) => {
+
+// GET /lecturas/:usuario_id
+router.get('/lecturas/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
+
   try {
-    const [result] = await db.query('SELECT * FROM lecturas WHERE usuario_id = ?', [usuario_id]);
-    res.json(result);
+    const [rows] = await db.query(
+      'SELECT  temperatura, ph, alimento, fecha_hora FROM lecturas WHERE usuario_id = ? ORDER BY fecha_hora DESC LIMIT 100',
+      [usuario_id]
+    );
+    res.json(rows);
   } catch (err) {
     console.error('Error al obtener lecturas:', err);
     res.status(500).json({ error: 'Error al obtener lecturas' });
   }
 });
+
 
 module.exports = router;
