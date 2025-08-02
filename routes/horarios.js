@@ -8,18 +8,18 @@ router.post('/', async (req, res) => {
 
   try {
     // Verifica si el usuario ya tiene horario
-    const [existing] = await db.query('SELECT * FROM horarios WHERE usuario_id = ?', [usuario_id]);
+    const [existing] = await db.query('SELECT * FROM horario WHERE usuario_id = ?', [usuario_id]);
 
     if (existing.length > 0) {
       // Si ya existe, actualiza
       await db.query(
-        'UPDATE horarios SET hora1 = ?, hora2 = ? WHERE usuario_id = ?',
+        'UPDATE horario SET hora1 = ?, hora2 = ? WHERE usuario_id = ?',
         [hora1, hora2, usuario_id]
       );
     } else {
       // Si no existe, inserta nuevo
       await db.query(
-        'INSERT INTO horarios (usuario_id, hora1, hora2) VALUES (?, ?, ?)',
+        'INSERT INTO horario (usuario_id, hora1, hora2) VALUES (?, ?, ?)',
         [usuario_id, hora1, hora2]
       );
     }
@@ -37,7 +37,7 @@ router.get('/:usuario_id', async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT hora1, hora2 FROM horarios WHERE usuario_id = ?',
+      'SELECT hora1, hora2 FROM horario WHERE usuario_id = ?',
       [usuario_id]
     );
     if (rows.length > 0) {
