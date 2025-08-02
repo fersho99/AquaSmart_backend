@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// POST /lecturas
-router.post('/lecturas', async (req, res) => {
-  const { usuario_id,  temperatura, ph, alimento } = req.body;
+// POST /  ---> https://aquasmart-backend.onrender.com/lecturas
+router.post('/', async (req, res) => {
+  const { usuario_id, temperatura, ph, alimento } = req.body;
 
   try {
     await db.query(
       'INSERT INTO lecturas (usuario_id, temperatura, ph, alimento, fecha_hora) VALUES (?, ?, ?, ?, NOW())',
-      [usuario_id,  temperatura, ph, alimento]
+      [usuario_id, temperatura, ph, alimento]
     );
     res.json({ message: 'Lectura guardada' });
   } catch (err) {
@@ -18,14 +18,13 @@ router.post('/lecturas', async (req, res) => {
   }
 });
 
-
-// GET /lecturas/:usuario_id
-router.get('/lecturas/:usuario_id', async (req, res) => {
+// GET /:usuario_id  ---> https://aquasmart-backend.onrender.com/lecturas/23
+router.get('/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
 
   try {
     const [rows] = await db.query(
-      'SELECT  temperatura, ph, alimento, fecha_hora FROM lecturas WHERE usuario_id = ? ORDER BY fecha_hora DESC LIMIT 100',
+      'SELECT temperatura, ph, alimento, fecha_hora FROM lecturas WHERE usuario_id = ? ORDER BY fecha_hora DESC LIMIT 100',
       [usuario_id]
     );
     res.json(rows);
@@ -34,6 +33,5 @@ router.get('/lecturas/:usuario_id', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener lecturas' });
   }
 });
-
 
 module.exports = router;
