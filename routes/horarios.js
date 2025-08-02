@@ -7,13 +7,22 @@ router.post('/', async (req, res) => {
   const { usuario_id, hora1, hora2 } = req.body;
 
   try {
-    // Elimina horarios anteriores (si se desea solo guardar dos por usuario)
-    await db.query('DELETE FROM horario WHERE usuario_id = ?', [usuario_id]);
+    // Verifica si el usuario ya tiene horario
+    const [existing] = await db.query('SELECT * FROM horarios WHERE usuario_id = ?', [usuario_id]);
 
-    await db.query(
-      'INSERT INTO horario (usuario_id, hora) VALUES (?, ?), (?, ?)',
-      [usuario_id, hora1, usuario_id, hora2]
-    );
+    if (existing.length > 0) {
+      // Si ya existe, actualiza
+      await db.query(
+        'UPDATE horarios SET hora1 = ?, hora2 = ? WHERE usuario_id = ?',
+        [hora1, hora2, usuario_id]
+      );
+    } else {
+      // Si no existe, inserta nuevo
+      await db.query(
+        'INSERT INTO horarios (usuario_id, hora1, hora2) VALUES (?, ?, ?)',
+        [usuario_id, hora1, hora2]
+      );
+    }
 
     res.json({ message: 'Horarios guardados correctamente' });
   } catch (err) {
@@ -28,14 +37,18 @@ router.get('/:usuario_id', async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT hora FROM horario WHERE usuario_id = ? ORDER BY hora ASC',
+      'SELECT hora1, hora2 FROM horarios WHERE usuario_id = ?',
       [usuario_id]
     );
-    res.json(rows);
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.json({ hora1: null, hora2: null });
+    }
   } catch (err) {
     console.error('Error al obtener horarios:', err);
     res.status(500).json({ error: 'Error al obtener horarios' });
   }
 });
 
-module.exports = router; 
+module.exports = router;
