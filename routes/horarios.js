@@ -3,11 +3,11 @@ const router = express.Router();
 const db = require('../db');
 
 // POST /horarios
-router.post('/horarios', async (req, res) => {
+router.post('/', async (req, res) => {
   const { usuario_id, hora1, hora2 } = req.body;
 
   try {
-    // Elimina horarios anteriores (opcional si solo hay 2 por usuario)
+    // Elimina horarios anteriores (si se desea solo guardar dos por usuario)
     await db.query('DELETE FROM horarios WHERE usuario_id = ?', [usuario_id]);
 
     await db.query(
@@ -23,7 +23,7 @@ router.post('/horarios', async (req, res) => {
 });
 
 // GET /horarios/:usuario_id
-router.get('/horarios/:usuario_id', async (req, res) => {
+router.get('/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
 
   try {
@@ -37,3 +37,5 @@ router.get('/horarios/:usuario_id', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener horarios' });
   }
 });
+
+module.exports = router; 

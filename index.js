@@ -18,6 +18,7 @@ app.use('/auth', require('./routes/auth'));
 app.use('/peces', require('./routes/peces'));
 app.use('/lecturas', require('./routes/lecturas'));
 app.use('/alimentacion', require('./routes/alimentacion'));
+app.use('/horarios', require('./routes/horarios'));
 
 
 const PORT = process.env.PORT || 3000;
