@@ -38,22 +38,22 @@ router.post('/guardar', async (req, res) => {
   }
 });
 
-// Obtener todos los peces del usuario con su información y cantidad
+// GET /peces/usuario/:usuario_id
 router.get('/usuario/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
 
   try {
-    const [rows] = await db.query(
-      `SELECT p.nombre, p.temp_min, p.temp_max, p.ph_min, p.ph_max, p.descripcion, pu.cantidad
-       FROM peces_usuario pu
-       JOIN peces p ON pu.pez_id = p.id_P
-       WHERE pu.usuario_id = ?`,
-      [usuario_id]
-    );
+    const [rows] = await db.query(`
+      SELECT p.nombre, pu.cantidad, p.temp_min, p.temp_max, p.ph_min, p.ph_max, p.descripcion
+      FROM peces_usuario pu
+      JOIN peces p ON pu.pez_id = p.id_P
+      WHERE pu.usuario_id = ?
+    `, [usuario_id]);
+
     res.json(rows);
   } catch (err) {
-    console.error('Error al obtener peces del usuario:', err);
-    res.status(500).json({ error: 'Error al obtener peces' });
+    console.error('Error al obtener los peces del usuario:', err);
+    res.status(500).json({ error: 'Error al obtener los peces del usuario' });
   }
 });
 
