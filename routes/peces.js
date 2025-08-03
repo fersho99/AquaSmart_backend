@@ -5,7 +5,7 @@ const db = require('../db');
 
 // Guardar pez y registrar en peces_usuario
 router.post('/guardar', async (req, res) => {
-  const { usuario_id, nombre, temp_min, temp_max, ph_min, ph_max, descripcion } = req.body;
+  const { usuario_id, nombre, temp_min, temp_max, ph_min, ph_max, descripcion, cantidad } = req.body;
 
   try {
     // Verificar si ya existe el pez
@@ -25,8 +25,10 @@ router.post('/guardar', async (req, res) => {
 
     // Registrar en peces_usuario
     await db.query(
-      'INSERT INTO peces_usuario (usuario_id, pez_id, cantidad) VALUES (?, ?, 1) ON DUPLICATE KEY UPDATE cantidad = cantidad + 1',
-      [usuario_id, pez_id]
+      `INSERT INTO peces_usuario (usuario_id, pez_id, cantidad)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)`,
+      [usuario_id, pez_id, cantidad || 1]
     );
 
     res.json({ success: true });
@@ -35,5 +37,25 @@ router.post('/guardar', async (req, res) => {
     res.status(500).json({ error: 'Error al guardar el pez' });
   }
 });
+
+// Obtener todos los peces del usuario con su información y cantidad
+router.get('/usuario/:usuario_id', async (req, res) => {
+  const { usuario_id } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      `SELECT p.nombre, p.temp_min, p.temp_max, p.ph_min, p.ph_max, p.descripcion, pu.cantidad
+       FROM peces_usuario pu
+       JOIN peces p ON pu.pez_id = p.id_P
+       WHERE pu.usuario_id = ?`,
+      [usuario_id]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error al obtener peces del usuario:', err);
+    res.status(500).json({ error: 'Error al obtener peces' });
+  }
+});
+
 
 module.exports = router;
