@@ -8,13 +8,12 @@ router.post('/guardar', async (req, res) => {
   const { usuario_id, nombre, temp_min, temp_max, ph_min, ph_max, descripcion, cantidad } = req.body;
 
   try {
-    // Verificar si ya existe el pez
-    const [existente] = await db.query('SELECT id_P FROM peces WHERE nombre = ?', [nombre]);
-
+    // Verificar si ya existe el pez en la tabla peces
+    const [existentePez] = await db.query('SELECT id_P FROM peces WHERE nombre = ?', [nombre]);
     let pez_id;
 
-    if (existente.length > 0) {
-      pez_id = existente[0].id_P;
+    if (existentePez.length > 0) {
+      pez_id = existentePez[0].id_P;
     } else {
       const [insertado] = await db.query(
         'INSERT INTO peces (nombre, temp_min, temp_max, ph_min, ph_max, descripcion) VALUES (?, ?, ?, ?, ?, ?)',
@@ -23,13 +22,25 @@ router.post('/guardar', async (req, res) => {
       pez_id = insertado.insertId;
     }
 
-    // Registrar en peces_usuario
-    await db.query(
-      `INSERT INTO peces_usuario (usuario_id, pez_id, cantidad)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE cantidad = cantidad + VALUES(cantidad)`,
-      [usuario_id, pez_id, cantidad || 1]
+    // Verificar si el usuario ya tiene ese pez
+    const [existenteUsuario] = await db.query(
+      'SELECT cantidad FROM peces_usuario WHERE usuario_id = ? AND pez_id = ?',
+      [usuario_id, pez_id]
     );
+
+    if (existenteUsuario.length > 0) {
+      // Si ya existe, sumamos la cantidad
+      await db.query(
+        'UPDATE peces_usuario SET cantidad = cantidad + ? WHERE usuario_id = ? AND pez_id = ?',
+        [cantidad || 1, usuario_id, pez_id]
+      );
+    } else {
+      // Si no existe, lo insertamos
+      await db.query(
+        'INSERT INTO peces_usuario (usuario_id, pez_id, cantidad) VALUES (?, ?, ?)',
+        [usuario_id, pez_id, cantidad || 1]
+      );
+    }
 
     res.json({ success: true });
   } catch (err) {
@@ -38,16 +49,25 @@ router.post('/guardar', async (req, res) => {
   }
 });
 
-// GET /peces/usuario/:usuario_id
+// Obtener peces agrupados por especie
 router.get('/usuario/:usuario_id', async (req, res) => {
   const { usuario_id } = req.params;
 
   try {
     const [rows] = await db.query(`
-      SELECT p.nombre, pu.cantidad, p.temp_min, p.temp_max, p.ph_min, p.ph_max, p.descripcion
+      SELECT 
+        p.id_P AS pez_id,
+        p.nombre,
+        SUM(pu.cantidad) AS cantidad,
+        p.temp_min,
+        p.temp_max,
+        p.ph_min,
+        p.ph_max,
+        p.descripcion
       FROM peces_usuario pu
       JOIN peces p ON pu.pez_id = p.id_P
       WHERE pu.usuario_id = ?
+      GROUP BY p.id_P, p.nombre, p.temp_min, p.temp_max, p.ph_min, p.ph_max, p.descripcion
     `, [usuario_id]);
 
     res.json(rows);
@@ -57,5 +77,41 @@ router.get('/usuario/:usuario_id', async (req, res) => {
   }
 });
 
+// Eliminar pez o reducir cantidad
+router.post('/eliminar', async (req, res) => {
+  const { usuario_id, pez_id, cantidad } = req.body;
+
+  try {
+    const [existente] = await db.query(
+      'SELECT cantidad FROM peces_usuario WHERE usuario_id = ? AND pez_id = ?',
+      [usuario_id, pez_id]
+    );
+
+    if (existente.length === 0) {
+      return res.status(404).json({ error: 'Este pez no está en tu pecera' });
+    }
+
+    const cantidadActual = existente[0].cantidad;
+
+    if (!cantidad || cantidad >= cantidadActual) {
+      // Eliminar el pez si no se especifica cantidad o si la cantidad a quitar >= actual
+      await db.query(
+        'DELETE FROM peces_usuario WHERE usuario_id = ? AND pez_id = ?',
+        [usuario_id, pez_id]
+      );
+    } else {
+      // Restar solo la cantidad indicada
+      await db.query(
+        'UPDATE peces_usuario SET cantidad = cantidad - ? WHERE usuario_id = ? AND pez_id = ?',
+        [cantidad, usuario_id, pez_id]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error al eliminar el pez:', err);
+    res.status(500).json({ error: 'Error al eliminar el pez' });
+  }
+});
 
 module.exports = router;
