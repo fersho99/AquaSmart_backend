@@ -58,7 +58,7 @@ router.get('/usuario/:usuario_id', async (req, res) => {
       SELECT 
         p.id_P AS pez_id,
         p.nombre,
-        SUM(pu.cantidad) AS cantidad,
+        CAST(SUM(pu.cantidad) AS UNSIGNED) AS cantidad,
         p.temp_min,
         p.temp_max,
         p.ph_min,
